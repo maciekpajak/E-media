@@ -85,13 +85,13 @@ class FileData:
        
         #gap 1
         if self.GAP1 != []:
-            gap1_layout =  [[sg.Multiline(str(self.GAP1,'utf-8'),disabled=True,size = (100,100))]]
+            gap1_layout =  [[sg.Multiline(str(self.GAP1),disabled=True,size = (100,100))]]
         else:
             gap1_layout =  [[sg.T("Gap 1 is empty")]]
 
         #gap2 
         if self.GAP2 != []:
-            gap2_layout =  [[sg.Multiline(str(self.GAP2,'utf-8'),disabled=True,size = (100,100))]]
+            gap2_layout =  [[sg.Multiline(str(self.GAP2),disabled=True,size = (100,100))]]
         else:
             gap2_layout =  [[sg.T("Gap 2 is empty")]]
 
@@ -275,14 +275,5 @@ class FileData:
         imgFphase = plt.imshow(F_phase,cmap=cm.Greys_r)
         plt.title("phase of F(k)")
         plt.show(block=False)
-
-
-
-
-
-
-
-
-
 
 
