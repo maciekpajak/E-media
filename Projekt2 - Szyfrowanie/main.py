@@ -2,24 +2,15 @@ from FileData import FileData
 import os
 import PySimpleGUI as sg
 from PIL import Image
-import logging
 import RSA
 import binascii as bina
-import sys
 
 
 def main():
 
-    log = open('log.txt', 'w')
-    
-    logging.basicConfig(filename='./log.log', level=logging.DEBUG, 
-                        format='%(asctime)s %(levelname)s %(name)s %(message)s')
-    logger = logging.getLogger(__name__)
-
     fileLoaded = False
 
-    sg.change_look_and_feel('DefaultNoMoreNagging')
-    sg.theme('DefaultNoMoreNagging')
+    sg.theme('SystemDefault')
 
     menu_def = [['File',['Open','---', 'Exit']],
                 ['Image',['Display','Meta data','DFT 2D']],
@@ -27,7 +18,7 @@ def main():
                 ['RSA', ['Key Generator', 
                          'Encrypt File', ['ECB - encrypt', 'CBC - encrypt', 'PCBC - encrypt'], 
                          'Decrypt File', ['ECB - decrypt', 'CBC - decrypt', 'PCBC - decrypt']]],
-                ['RSA2',['EECB2','DECB2']],
+                ['RSA2',['ECB2 - encrypt','ECB2 - decrypt']],
                 ['Help']]
 
     filename = None
@@ -41,7 +32,7 @@ def main():
     
     while True:
         event, values = window.read()
-        if event == 'Exit':	
+        if event == 'Exit' or event == sg.WIN_CLOSED:	
             break
         if event == 'Open':
             filename = sg.popup_get_file('Please enter a file name')
@@ -73,7 +64,6 @@ def main():
             
         if event == 'Meta data':	
             if fileLoaded:
-                log.write('Succes!')
                 fileData.display_meta_data()
             else:
                 sg.popup_error('File is not loaded!')
@@ -82,7 +72,6 @@ def main():
         if event == 'DFT 2D':	
             if fileLoaded:
                 fileData.dft()
-                log.write('Succes!')
             else:
                 sg.popup_error('File is not loaded!')
             
@@ -94,14 +83,12 @@ def main():
                     fileData.anonym()
                     fileData.writeToFile(file2)
                 except:
-                    logger.exception('Anonymization failed!')
-                logger.info('Succes! ')
+                    sg.popup_error("Error! Anonymizaton failed")
                 sg.popup('Succes! File created!')
                 file2.close()
             else:
                 sg.popup_error('File is not loaded!')
             
-# ---------------- Key generator button -----------------------
         if event == 'Key Generator':
             RSA.key_generator()
 
@@ -113,7 +100,7 @@ def main():
             mode = 'E'
             type = 'ECB'
             try:
-                if(crypto(mode, type, fileLoaded, fileData, window, logger)):
+                if(crypto(mode, type, fileLoaded, fileData, window)):
                     fileData = load_and_display_file(window, './encrypted_file.bmp')
             except:
                 sg.popup_error("Error! Cannot encrypt")
@@ -125,7 +112,7 @@ def main():
             mode = 'E'
             type = 'CBC'
             try:
-                if(crypto(mode, type, fileLoaded, fileData, window, logger)):
+                if(crypto(mode, type, fileLoaded, fileData, window)):
                     fileData = load_and_display_file(window, './encrypted_file.bmp')
             except:
                 sg.popup_error("Error! Cannot encrypt")
@@ -137,18 +124,18 @@ def main():
             mode = 'E'
             type = 'PCBC'
             try:
-                if(crypto(mode, type, fileLoaded, fileData, window, logger)):
+                if(crypto(mode, type, fileLoaded, fileData, window)):
                     fileData = load_and_display_file(window, './encrypted_file.bmp')
             except:
                 sg.popup_error("Error! Cannot encrypt")
-        if event == 'EECB2':
+        if event == 'ECB2 - encrypt':
             if not fileLoaded: 
                 sg.popup_error('File is not loaded!')
                 continue
             mode = 'E'
             type = 'EECB2'
             try:
-                if(crypto(mode, type, fileLoaded, fileData, window, logger)):
+                if(crypto(mode, type, fileLoaded, fileData, window)):
                     fileData = load_and_display_file(window, './encrypted_file.bmp')
             except:
                 sg.popup_error("Error! Cannot encrypt")
@@ -161,7 +148,7 @@ def main():
             mode = 'D'
             type = 'ECB'
             try:
-                if(crypto(mode, type, fileLoaded, fileData, window, logger)):
+                if(crypto(mode, type, fileLoaded, fileData, window)):
                     fileData = load_and_display_file(window, './decrypted_file.bmp')
             except:
                 sg.popup_error("Error! Cannot decrypt")
@@ -173,7 +160,7 @@ def main():
             mode = 'D'
             type = 'CBC'
             try:
-                if(crypto(mode, type, fileLoaded, fileData, window, logger)):
+                if(crypto(mode, type, fileLoaded, fileData, window)):
                     fileData = load_and_display_file(window, './decrypted_file.bmp')
             except:
                 sg.popup_error("Error! Cannot decrypt")
@@ -185,19 +172,19 @@ def main():
             mode = 'D'
             type = 'PCBC'
             try:
-                if(crypto(mode, type, fileLoaded, fileData, window, logger)):
+                if(crypto(mode, type, fileLoaded, fileData, window)):
                     fileData = load_and_display_file(window, './decrypted_file.bmp')
             except:
                 sg.popup_error("Error! Cannot decrypt")
 
-        if event == 'DECB2':
+        if event == 'ECB2 - decrypt':
             if not fileLoaded: 
                 sg.popup_error('File is not loaded!')
                 continue
             mode = 'D'
             type = 'DECB2'
             try:
-                if(crypto(mode, type, fileLoaded, fileData, window, logger)):
+                if(crypto(mode, type, fileLoaded, fileData, window)):
                     fileData = load_and_display_file(window, './decrypted_file.bmp')
             except:
                 sg.popup_error("Error! Cannot decrypt")
@@ -206,9 +193,8 @@ def main():
         file.close()
     if os.path.isfile('tmp.png'):
         os.remove('tmp.png')
-    log.close()
     window.close()
-        
+# main end --------------------------------------------------------        
 
 def load_and_display_file(window, filename):
     file = open(filename, "rb")
@@ -219,7 +205,7 @@ def load_and_display_file(window, filename):
     return fileData
 
 
-def crypto(mode, type, fileLoaded, fileData, window, logger):
+def crypto(mode, type, fileLoaded, fileData, window):
     if fileLoaded:
         # check if default key file exist
         if os.path.isfile('./key.txt'):
@@ -274,7 +260,6 @@ def crypto(mode, type, fileLoaded, fileData, window, logger):
 
     # file not loaded error
     else: 
-        print('\tError! File not loaded ')
         sg.popup_error('File is not loaded!')
 
 
